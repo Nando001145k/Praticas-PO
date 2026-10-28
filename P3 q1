@@ -1,0 +1,17 @@
+# Instanciando o modelo
+model = Model(sense=MINIMIZE, solver_name=CBC)
+
+# Dados do problema
+demanda_diaria = [10, 6, 8, 5, 9, 4, 6]  # Seg a Dom
+dias_semana = range(7)
+
+# Variáveis de decisão: x[i] representa o número de empregados que COMEÇAM o turno no dia 'i'
+x = [model.add_var(name=f"x_{i}", var_type=INTEGER) for i in dias_semana]
+
+# Função Objetivo: Minimizar o custo total (Cada um trabalha 5 dias a R$30/dia = R$150/empregado)
+model.objective = minimize(150 * xsum(x[i] for i in dias_semana))
+
+# Restrições: Para cada dia 'j', a soma dos empregados trabalhando deve atender a demanda daquele dia
+# O empregado que começa no dia 'i' trabalha no dia 'j' se a diferença ciclica (j - i) % 7 for menor que 5
+for j in dias_semana:
+    model += xsum(x[i] for i in dias_semana if (j - i) % 7 < 5) >= demanda_diaria[j], f"demanda_dia_{j}"
